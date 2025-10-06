@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+# =============================================================================
+## @file   LowQ2RecoResolution.py
+#  @author Derek Anderson
+#  @date   10.06.2025
+# -----------------------------------------------------------------------------
+## @brief Script to compute energy resolution for a
+#    specified particle species
+#
+#  Usage if executed directly:
+#    ./LowQ2RecoResolution.py -i <input file> -o <output file> -p <pdg code>
+# =============================================================================
+
+import argparse as ap
+import numpy as np
+import ROOT
+import sys
+
+from podio.reading import get_reader
+
+def CalculateReso(
+    ifile = "root://dtn-eic.jlab.org//volatile/eic/EPIC/RECO/25.07.0/epic_craterlake/SINGLE/e-/5GeV/45to135deg/e-_5GeV_45to135deg.0099.eicrecon.edm4eic.root",
+    ofile = "test_reso.root",
+    pdg   = 11
+):
+    """CalculateReso
+
+    A function to calculate resolution for a 
+    specified species of particle.
+
+    Args:
+      ifile: input file name
+      ofile: output file name
+      pdg:   PDG code of particle species
+    Returns:
+      calculated resolution
+    """
+
+    # set up histograms, etc. -------------------------------------------------
+
+    # create histogram from extracting resolution
+    hres = ROOT.TH1D("hEneRes", ";(E_{clust} - E_{par}) / E_{par}", 50, -2., 3.)
+    hres.Sumw2()
+
+    # event loop --------------------------------------------------------------
+
+    # loop through all events
+    reader = get_reader(ifile)
+    for iframe, frame in enumerate(reader.get("events")):
+
+        # grab truth-cluster associations from frame
+        #   -- FIXME update to grab relevant collection
+        #      for Low-Q2
+        assocs = frame.get("EcalBarrelClusterAssociations")
+
+        # now hunt down clusters associated with electron
+        for assoc in assocs:
+
+            # associated truth particle should be the 
+            # identified species
+            if assoc.getSim().getPDG() != pdg:
+                continue
+
+            # calculate energy of truth particle
+            msim  = assoc.getSim().getMass()
+            pxsim = assoc.getSim().getMomentum().x
+            pysim = assoc.getSim().getMomentum().y
+            pzsim = assoc.getSim().getMomentum().z
+            psim2 = pxsim**2 + pysim**2 + pzsim**2
+            esim  = np.sqrt(psim2 + msim**2)
+
+            # and now we should be looking at a cluster
+            # connected to _the_ primary
+            eres = (assoc.getRec().getEnergy() - esim) / esim
+            hres.Fill(eres)
+
+    # resolution calculation --------------------------------------------------
+
+    # fit spectrum with a gaussian to extract peak 
+    fres = ROOT.TF1("fEneRes", "gaus(0)", -0.5, 0.5)
+    fres.SetParameter(0, hres.Integral())
+    fres.SetParameter(1, hres.GetMean())
+    fres.SetParameter(2, hres.GetRMS())
+    hres.Fit(fres, "r")
+
+    # wrap up script ----------------------------------------------------------
+
+    # save objects
+    with ROOT.TFile(ofile, "recreate") as out:
+        out.WriteObject(hres, "hEneRes")
+        out.WriteObject(fres, "fEneRes")
+        out.Close()
+
+    # and return calculated resolution
+    return fres.GetParameter(2)
+
+# main ========================================================================
+
+if __name__ == "__main__":
+
+    # set up argments
+    parser = ap.ArgumentParser()
+    parser.add_argument("-i", "--input", help = "Input file")
+    parser.add_argument("-o", "--output", help = "Output file")
+    parser.add_argument("-p", "--pdg", help = "PDG code to look for", type = int)
+
+    # grab arguments
+    args = parser.parse_args()
+
+    # run analysis
+    CalculateReso(args.input, args.output, args.pdg)
+
+# end =========================================================================

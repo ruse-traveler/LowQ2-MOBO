@@ -1,0 +1,15 @@
+# ===============================================
+# @file    remove-environment
+# @authors Derek Anderson
+# @date    08.14.2025
+# -----------------------------------------------
+# Removes conda/mamba environment for running
+# Low-Q2 MOBO exercise.
+# 
+# Usage:
+#   ./remove-environment
+# ===============================================
+
+conda remove -n lowq2-mobo --all
+
+# end ===========================================
