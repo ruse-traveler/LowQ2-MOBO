@@ -72,22 +72,20 @@ if __name__ == "__main__":
     #   -- TODO automate adding parameters to parser
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", "--tag", help = "Trial tag", type = str, default = None)
-    parser.add_argument("--enable_staves_2", "--enable_staves_2", help = "Stave 2 value", type = int)
-    parser.add_argument("--enable_staves_3", "--enable_staves_3", help = "Stave 3 value", type = int)
-    parser.add_argument("--enable_staves_4", "--enable_staves_4", help = "Stave 4 value", type = int)
-    parser.add_argument("--enable_staves_5", "--enable_staves_5", help = "Stave 5 value", type = int)
-    parser.add_argument("--enable_staves_6", "--enable_staves_6", help = "Stave 6 value", type = int)
+    parser.add_argument("--tagger1_width", "--tagger1_width", help = "Width of tagger 1 discs", type = float)
+    parser.add_argument("--tagger1_height", "--tagger1_height", help = "Height of tagger 1 discs", type = float)
+    parser.add_argument("--tagger2_width", "--tagger2_width", help = "Width of tagger 2 discs", type = float)
+    parser.add_argument("--tagger2_height", "--tagger2_height", help = "Height of tagger 2 discs", type = float)
 
     # grab arguments & create dictionary
     # of parameters
     #   -- TODO this can also be automated
     args   = parser.parse_args()
     params = {
-        "enable_staves_2" : args.enable_staves_2,
-        "enable_staves_3" : args.enable_staves_3,
-        "enable_staves_4" : args.enable_staves_4,
-        "enable_staves_5" : args.enable_staves_5,
-        "enable_staves_6" : args.enable_staves_6
+        "tagger1_width"  : args.tagger1_width,
+        "tagger1_height" : args.tagger1_height,
+        "tagger2_width"  : args.tagger2_width,
+        "tagger2_height" : args.tagger2_height
     }
 
     # run objective
