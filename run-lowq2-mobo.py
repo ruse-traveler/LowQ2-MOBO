@@ -1,5 +1,5 @@
 # =============================================================================
-## @file   run-bic-mobo.py
+## @file   run-lowq2-mobo.py
 #  @author Derek Anderson
 #  @date   09.25.2025
 # -----------------------------------------------------------------------------
@@ -7,74 +7,28 @@
 #    running the LowQ2-MOBO problem.
 # =============================================================================
 
+import argparse
+import datetime
+import numpy
 import os
+import pandas
 import pickle
-import ROOT
+import re
 import subprocess
 
+from ax.core.search_space import SearchSpace
+from ax.generation_strategy.generation_node import GenerationStep
+from ax.generation_strategy.generation_strategy import GenerationStrategy
+from ax.modelbridge.registry import Generators
 from ax.service.ax_client import AxClient, ObjectiveProperties
 from ax.service.utils.report_utils import exp_to_df
-from scheduler import AxScheduler, JobLibRunner
+from scheduler import AxScheduler, JobLibRunner, SlurmRunner
 
 import AID2ETestTools as att
 import EICMOBOTestTools as emt
+import interfaces as itf
 
-def RunObjectives(*args, **kwargs):
-    """RunObjectives
-
-    Runs trial (simulation, reconstruction,
-    and all analyses) for provided set of
-    updated parameters.
-
-    Args:
-      args:   any positional arguments
-      kwargs: any keyword arguments
-    Returns:
-      dictionary of objectives and their values
-    """
-
-    # create tag for trial
-    tag = "AxTrial" + str(RunObjectives.counter)
-    RunObjectives.counter += 1
-
-    # extract path to script being run currently
-    main_path, main_file = emt.SplitPathAndFile(
-        os.path.realpath(__file__)
-    )
-
-    # determine paths to config files
-    #   -- FIXME this is brittle!
-    run_path  = main_path + "/configuration/run_config.json"
-    par_path  = main_path + "/configuration/parameters_config.json"
-    obj_path  = main_path + "/configuration/objectives_config.json"
-
-    # parse run config to extract path to eic-shell 
-    cfg_run   = emt.ReadJsonFile(run_path)
-    eic_shell = cfg_run["eic_shell"]
-
-    # create trial manager
-    trial = emt.TrialManager(run_path,
-                             par_path,
-                             obj_path)
-
-    # create and run script
-    script, ofiles = trial.MakeTrialScript(tag, kwargs)
-    subprocess.run([eic_shell, "--", script])
-
-    # extract electron resolution 
-    ofResEle = ROOT.TFile.Open(ofiles["ElectronEnergyResolution"])
-    fResEle  = ofResEle.Get("fEneRes")
-    eResEle  = fResEle.GetParameter(2)
-
-    # return dictionary of objectives
-    return {
-        "ElectronEnergyResolution" : eResEle
-    }
-
-# make sure trial counter starts at 0
-RunObjectives.counter = 0
-
-def main():
+def main(*args, **kwargs):
     """main
 
     Wrapper to run LowQ2-MOBO. The model
@@ -83,44 +37,117 @@ def main():
     and pickle files (generation) for
     downstream analysis.
 
-    User can
-    specify which runner to use with
-    the -r option:
+    User can specify which runner to use
+    with the -r option:
 
       joblib -- use joblib runner (default)
-      slurm  -- use slurm runner (TODO)
+      slurm  -- use slurm runner
       panda  -- use panda runner (TODO)
 
     Args:
       -r: specify runner (optional)
     """
 
+    # set up arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--runner", help = "Runner type", nargs = '?', const = 1, type = str, default = "joblib")
+
+    # grab arguments
+    args = parser.parse_args()    
+
+    # extract path to script being run currently
+    #   - FIXME this should get automated!
+    main_path, main_file = emt.SplitPathAndFile(
+        os.path.realpath(__file__)
+    )
+    run_path = main_path + "/configuration/run.config"
+    exp_path = main_path + "/configuration/problem.config"
+    par_path = main_path + "/configuration/parameters.config"
+    obj_path = main_path + "/configuration/objectives.config"
+
     # load relevant config files
-    cfg_exp = emt.ReadJsonFile("problem_config.json")
-    cfg_par = emt.ReadJsonFile("parameters_config.json")
-    cfg_obj = emt.ReadJsonFile("objectives_config.json")
+    cfg_run = emt.ReadJsonFile(run_path)
+    cfg_exp = emt.ReadJsonFile(exp_path)
+    cfg_par = emt.ReadJsonFile(par_path)
+    cfg_obj = emt.ReadJsonFile(obj_path)
 
     # translate parameter, objective options
     # into ax-compliant ones
     ax_pars = att.ConvertParamConfig(cfg_par)
     ax_objs = att.ConvertObjectConfig(cfg_obj)
 
+    # define generation strategy to use
+    gstrat = GenerationStrategy(
+        steps = [
+            GenerationStep(
+                model = Generators.SOBOL,
+                num_trials = cfg_exp["n_sobol"],
+                min_trials_observed = cfg_exp["min_sobol"],
+                max_parallelism = cfg_exp["n_sobol"]
+            ),
+            GenerationStep(
+                model = Generators.BOTORCH_MODULAR,
+                num_trials = -1,
+                max_parallelism = cfg_exp["max_parallel_gen"]
+            )
+        ]
+    )
+
     # create ax client
-    ax_client = AxClient()
+    ax_client = AxClient(
+        generation_strategy = gstrat,
+        enforce_sequential_optimization = False
+    )
     ax_client.create_experiment(
         name = cfg_exp["problem_name"],
         parameters = ax_pars,
         objectives = ax_objs
     )
 
+    # extract scheduler-specific options
+    cfg_sched = cfg_run["scheduler_opts"]
+
+    # set up runners
+    runner = None
+    match args.runner:
+        case "joblib":
+            runner = JobLibRunner(
+                n_jobs = cfg_sched["n_jobs"],
+                config = {
+                    'tmp_dir' : cfg_run["run_path"]
+                }
+            )
+        case "slurm":
+            runner = SlurmRunner(
+                partition     = cfg_sched["partition"],
+                time_limit    = cfg_sched["time_limit"],
+                memory        = cfg_sched["memory"],
+                cpus_per_task = cfg_sched["cpus_per_task"],
+                config        = {
+                    'sbatch_options' : {
+                        'account'   : cfg_sched["account"],
+                        'mail-user' : cfg_sched["mail-user"],
+                        'mail-type' : cfg_sched["mail-type"],
+                        'output'    : cfg_run["log_path"],
+                        'error'     : cfg_run["log_path"]
+                    }
+                }
+            )
+        case _:
+            raise ValueError("Unknown runner specified!")
+
     # set up scheduler
-    #   - TODO add switch to toggle slurm running
-    runner    = JobLibRunner(n_jobs = -1)
-    scheduler = AxScheduler(ax_client, runner)
-    scheduler.set_objective_function(RunObjectives)
+    scheduler = AxScheduler(
+        ax_client,
+        runner,
+        config = {
+            'job_output_dir' : cfg_exp["OUTPUT_DIR"],
+        }
+    )
+    scheduler.set_objective_function(itf.RunObjectives)
 
     # run and report best parameters
-    best = scheduler.run_optimization(max_trials = 720)
+    best = scheduler.run_optimization(max_trials = cfg_exp["n_max_trials"])
     print("Optimization complete! Best parameters:\n", best)
 
     # create paths to output files
