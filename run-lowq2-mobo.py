@@ -8,19 +8,13 @@
 # =============================================================================
 
 import argparse
-import datetime
-import numpy
 import os
-import pandas
 import pickle
-import re
-import subprocess
 
-from ax.core.search_space import SearchSpace
 from ax.generation_strategy.generation_node import GenerationStep
 from ax.generation_strategy.generation_strategy import GenerationStrategy
 from ax.modelbridge.registry import Generators
-from ax.service.ax_client import AxClient, ObjectiveProperties
+from ax.service.ax_client import AxClient
 from ax.service.utils.report_utils import exp_to_df
 from scheduler import AxScheduler, JobLibRunner, SlurmRunner
 
