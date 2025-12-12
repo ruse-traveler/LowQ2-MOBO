@@ -40,7 +40,7 @@ class SimGenerator:
           label:  the label associated with the input
           path:   the path to the input steering file
           steer:  the input steering file
-          inType: the type of input (e.g. gun, hepmc, etc.)
+          inType: the type of input (e.g. gun, gps, hepmc, etc.)
         Returns:
           command to be run
         """
@@ -65,6 +65,10 @@ class SimGenerator:
         command = self.cfgRun["sim_exec"] + compact + steerer
         if inType == "gun":
             command = command + " -G "
+        elif inType == "gps":
+            macro   = " --macroFile " + path + "/" + steer.replace(".py", ".mac")
+            command = command + " --enableG4GPS "
+            command = command + macro
 
         # return command with output file attached
         command = command + output
