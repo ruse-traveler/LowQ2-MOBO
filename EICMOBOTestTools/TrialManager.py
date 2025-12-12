@@ -128,7 +128,12 @@ class TrialManager:
         )
         commands = [setInstall, setConfig]
 
-        # TODO add overlap check here
+        # check for overlaps
+        #   -- TODO should stop trial somehow if
+        #      there are overlaps
+        #commands.append(
+        #    self.simGen.MakeOverlapCheckCommand()
+        #)
 
         # step 2: generate relevant simulation,
         # reconstruction commands
@@ -140,6 +145,12 @@ class TrialManager:
             inLoc  = inCfg["location"]
             inType = inCfg["type"]
             for inSteer in os.listdir(inLoc):
+
+                # only consider steering files
+                # (which end in .py)
+                isSteer = inSteer.endswith('.py')
+                if not isSteer:
+                    continue
 
                 # generate command to run simulation
                 commands.append(
@@ -162,8 +173,13 @@ class TrialManager:
                 )
 
             # step 3: generate relevant merging/analysis commands
-            doMerge, merged = self.anaGen.MakeMergeCommand(self.tag, inKey)
-            commands.append(doMerge)
+            #   -- FIXME it would be better to have some way to
+            #      1st identify what needs to be merged and then
+            #      only merge that
+            doSimMerge, simMerged = self.anaGen.MakeMergeCommand(self.tag, inKey, "sim")
+            doRecMerge, recMerged = self.anaGen.MakeMergeCommand(self.tag, inKey, "rec")
+            commands.append(doSimMerge)
+            commands.append(doRecMerge)
 
             # find objectives requiring current input
             for anaKey, anaCfg in self.cfgAna["objectives"].items():
@@ -181,7 +197,9 @@ class TrialManager:
                 command, outFile = self.anaGen.MakeCommand(self.tag,
                                                            inKey,
                                                            anaKey,
-                                                           merged)
+                                                           simMerged,
+                                                           recMerged)
+
                 # append analysis command and output file
                 # to appropriate lists/dictionaries
                 commands.append(command)

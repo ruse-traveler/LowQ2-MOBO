@@ -19,7 +19,7 @@ import sys
 from podio.reading import get_reader
 
 # default arguments
-IFileDefault = "root://dtn-eic.jlab.org//volatile/eic/EPIC/RECO/25.07.0/epic_craterlake/SINGLE/e-/5GeV/45to135deg/e-_5GeV_45to135deg.0099.eicrecon.edm4eic.root"
+IFileDefault = "../backward.e10ele.edm4eic.root"
 OFileDefault = "test_global_reso.root"
 
 def CalculateMomReso(
@@ -41,7 +41,7 @@ def CalculateMomReso(
     # set up histograms, etc. -------------------------------------------------
 
     # create histogram from extracting resolution
-    hres = ROOT.TH1D("hMomRes", "(p_{rec} - p_{sim}^{e}) / p_{sim}^{e}", 50, -2., 3.)
+    hres = ROOT.TH1D("hMomRes", ";(p_{rec} - p_{sim}^{e}) / p_{sim}^{e}", 50, -2., 3.)
     hres.Sumw2()
 
     # event loop --------------------------------------------------------------
@@ -94,6 +94,20 @@ def CalculateMomReso(
         out.WriteObject(hres, "hMomRes")
         out.WriteObject(fres, "fMomRes")
         out.Close()
+
+    # grab objective and other info
+    reso = fres.GetParameter(2)
+    eres = fres.GetParError(2)
+    mean = fres.GetParameter(1)
+    emea = fres.GetParError(1)
+
+    # write them out to a text file for extraction later
+    otext = ofile.replace(".root", ".txt")
+    with open(otext, 'w') as out:
+        out.write(f"{reso}\n")
+        out.write(f"{eres}\n")
+        out.write(f"{mean}\n")
+        out.write(f"{emea}")
 
     # and return calculated resolution
     return fres.GetParameter(2)

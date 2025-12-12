@@ -22,13 +22,15 @@ import sys
 from podio.reading import get_reader
 
 # default arguments
-IFileDefault = "root://dtn-eic.jlab.org//volatile/eic/EPIC/RECO/25.07.0/epic_craterlake/SINGLE/e-/5GeV/45to135deg/e-_5GeV_45to135deg.0099.eicrecon.edm4eic.root"
-OFileDefault = "test_reso.root"
-TagDefault   = 1
+ISimDefault = "../backward.e10ele.edm4hep.root"
+IRecDefault = "../backward.e10ele.edm4eic.root"
+OutDefault  = "test_local_reso.root"
+TagDefault  = 1
 
 def CalculateMomReso(
-    ifile = IFileDefault, 
-    ofile = OFileDefault,
+    sfile = ISimDefault,
+    rfile = IRecDefault,
+    ofile = OutDefault,
     tag = TagDefault
 ):
     """CalculateMomReso
@@ -37,7 +39,8 @@ def CalculateMomReso(
     specified tagger.
 
     Args:
-      ifile: input file name
+      sfile: input sim file name
+      rfile: input rec file name
       ofile: output file name
       tag:   tagger to use
     Returns:
@@ -55,18 +58,32 @@ def CalculateMomReso(
 
     # event loop --------------------------------------------------------------
 
-    # loop through all events
-    reader = get_reader(ifile)
-    for iframe, frame in enumerate(reader.get("events")):
+    # open inputs with podio readers
+    sreader  = get_reader(sfile)
+    rreader  = get_reader(rfile)
+    nsframes = len(sreader.get("events"))
+    nrframes = len(rreader.get("events"))
+    if nsframes != nrframes:
+        raise RuntimeError(f"The no. of sim frames ({nsframes}) isn't the same as the no. of reco frames ({nrframes})!")
+        return
+
+    # iterate through frames
+    sframes = sreader.get("events")
+    rframes = rreader.get("events")
+    for iframe in range(nsframes):
+
+        # grab sim and reco frames
+        sframe = sframes[iframe]
+        rframe = rframes[iframe]
 
         # grab relevant collections
-        maghits = frame.get("BackwardsBeamlineHits")  # FIXME this might be in npsim output...
-        taghits = None
+        maghits = sframe.get("BackwardsBeamlineHits")
+        tagtrks = None
         match tag:
             case 1:
-                taghits = frame.get("TaggerTrackerM1LocalTracks")
+                tagtrks = rframe.get("TaggerTrackerM1LocalTracks")
             case 2:
-                taghits = frame.get("TaggerTrackerM2LocalTracks")
+                tagtrks = rframe.get("TaggerTrackerM2LocalTracks")
             case _:
                 raise ValueError("Unkown tagger specified!")
 
@@ -76,10 +93,10 @@ def CalculateMomReso(
         pmag  = np.sqrt(pmag2)
 
         # now compare against tagger hits
-        for hit in taghits:
+        for trk in tagtrks:
 
-            # calculate momentum of tagger hit
-            ptag2 = hit.getMomentum().x**2 + hit.getMomentum().y**2 + hit.getMomentum().z**2
+            # calculate momentum of tagger track
+            ptag2 = trk.getMomentum().x**2 + trk.getMomentum().y**2 + trk.getMomentum().z**2
             ptag  = np.sqrt(ptag2)
 
             # and now compute resolution
@@ -103,8 +120,29 @@ def CalculateMomReso(
         out.WriteObject(fres, "fMomRes")
         out.Close()
 
+    # grab objective and other info
+    #   - FIXME the local track momenta is *very* different from
+    #     the electron momentum, so just use abs value of mean
+    #     and RMS of %-diff for now
+    #reso = fres.GetParameter(2)
+    #eres = fres.GetParError(2)
+    #mean = fres.GetParameter(1)
+    #emea = fres.GetParError(1)
+    reso = hres.GetRMS()
+    eres = hres.GetRMSError()
+    mean = np.abs(hres.GetMean())
+    emea = np.abs(hres.GetMeanError())
+
+    # write them out to a text file for extraction later
+    otext = ofile.replace(".root", ".txt")
+    with open(otext, 'w') as out:
+        out.write(f"{reso}\n")
+        out.write(f"{eres}\n")
+        out.write(f"{mean}\n")
+        out.write(f"{emea}")
+
     # and return calculated resolution
-    return fres.GetParameter(2)
+    return reso
 
 # main ========================================================================
 
@@ -113,12 +151,21 @@ if __name__ == "__main__":
     # set up argments
     parser = ap.ArgumentParser()
     parser.add_argument(
-        "-i",
-        "--input",
-        help = "Input file",
+        "-s",
+        "--sim",
+        help = "Input simulation file",
         nargs = '?',
-        const = IFileDefault,
-        default = IFileDefault,
+        const = ISimDefault,
+        default = ISimDefault,
+        type = str
+    )
+    parser.add_argument(
+        "-r",
+        "--reco",
+        help = "Input reconstruction file",
+        nargs = '?',
+        const = IRecDefault,
+        default = IRecDefault,
         type = str
     )
     parser.add_argument(
@@ -126,8 +173,8 @@ if __name__ == "__main__":
         "--output",
         help = "Output file",
         nargs = '?',
-        const = OFileDefault,
-        default = OFileDefault,
+        const = OutDefault,
+        default = OutDefault,
         type = str
     )
     parser.add_argument(
@@ -144,6 +191,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # run analysis
-    CalculateMomReso(args.input, args.output, args.tagger)
+    CalculateMomReso(args.sim, args.reco, args.output, args.tagger)
 
 # end =========================================================================

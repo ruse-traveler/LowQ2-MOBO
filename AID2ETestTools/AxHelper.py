@@ -46,7 +46,7 @@ def ConvertParamConfig(config):
         if pType == "range": 
             lLimit = ast.literal_eval(inParVal["lower"])
             uLimit = ast.literal_eval(inParVal["upper"])
-            bounds = (lLimit, uLimit)
+            bounds = [lLimit, uLimit]
 
         # if needed, extract domain
         domain = None
@@ -106,7 +106,7 @@ def CreateParamList(config):
         if pType == "range":
             lLimit = ast.literal_eval(inParVal["lower"])
             uLimit = ast.literal_eval(inParVal["upper"])
-            bounds = (lLimit, uLimit)
+            bounds = [lLimit, uLimit]
 
         # if needed, extract domain
         domain = None
