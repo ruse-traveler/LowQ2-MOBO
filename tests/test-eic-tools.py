@@ -20,22 +20,22 @@ import EICMOBOTestTools as emt
 # (0) Test ConfigParser -------------------------------------------------------
 
 # these should work
-enable2 = emt.GetParameter("enable_staves_2", "../configuration/parameters.config")
-enable3 = emt.GetParameter("enable_staves_3", "../configuration/parameters.config")
+tag1H = emt.GetParameter("tagger1_height", "../configuration/parameters.config")
+tag2W = emt.GetParameter("tagger2_width", "../configuration/parameters.config")
 
 # grab variables
-path2, type2, units2 = emt.GetPathElementAndUnits(enable2)
-path3, type3, units3 = emt.GetPathElementAndUnits(enable3)
+path1H, type1H, units1H = emt.GetPathElementAndUnits(tag1H)
+path2W, type2W, units2W = emt.GetPathElementAndUnits(tag2W)
 
-print(f"[0][enable_staves_2] path = {path2}, type = {type2}, units = {units2}")
-print(f"[0][enable_staves_3] path = {path3}, type = {type3}, units = {units3}")
+print(f"[0][tagger1_height] path = {path1H}, type = {type1H}, units = {units1H}")
+print(f"[0][tagger2_width] path = {path2W}, type = {type2W}, units = {units2W}")
 
 try:
-    enable3 = emt.GetParameter("eanble_satvse_3", "parameters.config")
+    tag2H = emt.GetParameter("tgager2_hieght", "parameters.config")
 except:
-    print(f"[0][enable_staves_3] exception raised!")
+    print(f"[0][tagger2_height] exception raised!")
 finally:
-    print(f"[0][enable_staves_3] typo generated error as expected!")
+    print(f"[0][tagger2_height] typo generated error as expected!")
 
 # (1) Test GeometryEditor -----------------------------------------------------
 
@@ -43,27 +43,27 @@ finally:
 geditor = emt.GeometryEditor("../configuration/run.config")
 
 # edit a couple parameters in one compact file
-geditor.EditCompact(enable2, 1, "test1A")
-geditor.EditCompact(enable3, 0, "test1A")
-print(f"[1][test A] set values of staves 2, 3 to 1, 0 respectively")
+geditor.EditCompact(tag1H, 147.5, "test1A")
+geditor.EditCompact(tag2W, 156.3, "test1A")
+print(f"[1][test A] set values of tagger 1 height, tagger 2 width to 147.5, 156.3 respectively")
 
 # now create config files associated with
 # compact; the 2nd line should leave
 # config file unmodified
-configA = geditor.EditConfig(enable2, "test1A")
-configA = geditor.EditConfig(enable3, "test1A")
+configA = geditor.EditConfig(tag1H, "test1A")
+configA = geditor.EditConfig(tag2W, "test1A")
 print(f"[1][Test A] config file {configA} created")
 
 # create a 2nd compact file with multiple
 # subsystems modified
-enable5 = emt.GetParameter("enable_staves_5", "../configuration/parameters.config")
-geditor.EditCompact(enable5, 1, "test1B")
-print(f"[1][test B] set value of stave 5 to 1")
+tag2H = emt.GetParameter("tagger2_height", "../configuration/parameters.config")
+geditor.EditCompact(tag2H, 159.8, "test1B")
+print(f"[1][test B] set value of tagger 2 height to 159.8")
 
 # this one should create a new config file,
 # and the 2nd line should add the modified
 # dRICH file
-configB = geditor.EditConfig(enable5, "test1B")
+configB = geditor.EditConfig(tag2H, "test1B")
 print(f"[1][test B] config file {configB} created")
 
 # (2) Test generators  --------------------------------------------------------
@@ -76,8 +76,8 @@ intest = "single_electron"
 inputs = enviro["sim_input"][intest]
 
 # try to create a simulation command
-dosimA = simgen.MakeCommand("test2A", intest, inputs["location"], "central.e5ele.py", inputs["type"])
-dosimB = simgen.MakeCommand("test2B", intest, inputs["location"], "central.e5ele.py", inputs["type"])
+dosimA = simgen.MakeCommand("test2A", intest, inputs["location"], "backward.e10ele.py", inputs["type"])
+dosimB = simgen.MakeCommand("test2B", intest, inputs["location"], "backward.e10ele.py", inputs["type"])
 print(f"[2][Test A] Created commands to do simulation:")
 print(f"  {dosimA}")
 print(f"  {dosimB}")
@@ -91,8 +91,8 @@ conPathB, conFileB = emt.SplitPathAndFile(configB)
 conFileB = conFileB.replace(".xml", "")
 
 # now try to create a simulation driver script
-runsimA = simgen.MakeScript("test2A", intest, "central.e5ele.py", conFileA, dosimA)
-runsimB = simgen.MakeScript("test2B", intest, "central.e5ele.py", conFileB, dosimB)
+runsimA = simgen.MakeScript("test2A", intest, "backward.e10ele.py", conFileA, dosimA)
+runsimB = simgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileB, dosimB)
 print(f"[2][Test B] created driver scripts for simulation:")
 print(f"  {runsimA}")
 print(f"  {runsimB}")
@@ -101,15 +101,15 @@ print(f"  {runsimB}")
 recgen = emt.RecGenerator("../configuration/run.config")
 
 # try to create a reco command
-dorecA = recgen.MakeCommand("test2A", intest, "central.e5ele.py")
-dorecB = recgen.MakeCommand("test2B", intest, "central.e5ele.py")
+dorecA = recgen.MakeCommand("test2A", intest, "backward.e10ele.py")
+dorecB = recgen.MakeCommand("test2B", intest, "backward.e10ele.py")
 print(f"[2][Test C] Created commands to do reconstruction:")
 print(f"  {dorecA}")
 print(f"  {dorecB}")
 
 # and now try to create a reconstruction driver script
-runrecA = recgen.MakeScript("test2A", intest, "central.e5ele.py", conFileA, dorecA)
-runrecB = recgen.MakeScript("test2B", intest, "central.e5ele.py", conFileB, dorecB)
+runrecA = recgen.MakeScript("test2A", intest, "backward.e10ele.py", conFileA, dorecA)
+runrecB = recgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileB, dorecB)
 print(f"[2][Test D] Created driver scripts for reconstruction:")
 print(f"  {runrecA}")
 print(f"  {runrecB}")
@@ -117,17 +117,21 @@ print(f"  {runrecB}")
 # create an ana generator
 anagen = emt.AnaGenerator("../configuration/run.config", "../configuration/objectives.config")
 
-# recreate output name for input to
+# recreate output names for input to
 # test ana generator
-steeTag = emt.ConvertSteeringToTag("central.e5ele.py")
+steeTag = emt.ConvertSteeringToTag("backward.e10ele.py")
+simOutA = emt.MakeOutName("test2A", intest, steeTag, "sim")
+simOutB = emt.MakeOutName("test2B", intest, steeTag, "sim")
 recOutA = emt.MakeOutName("test2A", intest, steeTag, "rec")
 recOutB = emt.MakeOutName("test2B", intest, steeTag, "rec")
-outDirA = enviro["out_path"] + "/test2A/" + recOutA
-outDirB = enviro["out_path"] + "/test2B/" + recOutB
+simDirA = enviro["out_path"] + "/test2A/" + simOutA
+simDirB = enviro["out_path"] + "/test2B/" + simOutB
+recDirA = enviro["out_path"] + "/test2A/" + recOutA
+recDirB = enviro["out_path"] + "/test2B/" + recOutB
 
 # try to create an analysis command
-doanaA, ofileA = anagen.MakeCommand("test2A", intest, "ElectronEnergyResolution", outDirA)
-doanaB, ofileB = anagen.MakeCommand("test2B", intest, "ElectronEnergyResolution", outDirB)
+doanaA, ofileA = anagen.MakeCommand("test2A", intest, "TaggerOneResolution", simDirA, recDirA)
+doanaB, ofileB = anagen.MakeCommand("test2B", intest, "TaggerOneResolution", simDirB, recDirB)
 print(f"[2][Test E] Created commands to do analysis")
 print(f"  (A) command = {doanaA}")
 print(f"      output  = {ofileA}")
@@ -135,8 +139,8 @@ print(f"  (B) command = {doanaB}")
 print(f"      output  = {ofileB}")
 
 # and finally try to create an analysis script
-runanaA = anagen.MakeScript("test2A", intest, "ElectronEnergyResolution", doanaA)
-runanaB = anagen.MakeScript("test2B", intest, "ElectronEnergyResolution", doanaB)
+runanaA = anagen.MakeScript("test2A", intest, "TaggerOneResolution", doanaA)
+runanaB = anagen.MakeScript("test2B", intest, "TaggerOneResolution", doanaB)
 print(f"[2][Test F] Created driver scripts for analysis")
 print(f"  {runanaA}")
 print(f"  {runanaB}")
@@ -146,18 +150,19 @@ print(f"  {runanaB}")
 # create a trial manager
 triman = emt.TrialManager("../configuration/run.config",
                           "../configuration/parameters.config",
-                          "../configuration/objectives.config")
+                          "../configuration/objectives.config",
+                          "test3")
 
 # create new parameters to test
 nupar3 = {
-    "enable_staves_2" : 1,
-    "enable_staves_3" : 0,
-    "enable_staves_5" : 1,
-    "enable_staves_6" : 1
+    "tagger1_width"  : 157.0,
+    "tagger1_height" : 234.0,
+    "tagger2_width"  : 143.0,
+    "tagger2_height" : 178.0
 }
 
 # make run script
-dorun3, ofiles3 = triman.MakeTrialScript("test3", nupar3)
+dorun3, ofiles3 = triman.MakeTrialScript(nupar3)
 print(f"[3] Created driver script for entire trial:")
 print(f"  script  = {dorun3}")
 print(f"  outputs =")

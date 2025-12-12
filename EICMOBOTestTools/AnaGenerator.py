@@ -30,15 +30,16 @@ class AnaGenerator:
         self.cfgRun = ConfigParser.ReadJsonFile(run)
         self.cfgAna = ConfigParser.ReadJsonFile(ana)
 
-    def MakeMergeCommand(self, tag, label):
+    def MakeMergeCommand(self, tag, label, stage = "rec"):
         """MakeMergeCommand
 
         Generates command to merge reconstructed
         output ahead of analysis scripts.
 
         Args:
-          tag:    the tag associated with the current trial
-          label:  the label associated with the input
+          tag:   the tag associated with the current trial
+          label: the label associated with the input
+          stage: the stage (sim vs. reco) to merge
         Returns:
           the merging command and the path to the merge output
         """
@@ -47,11 +48,11 @@ class AnaGenerator:
         outDir = self.cfgRun["out_path"] + "/" + tag
 
         # make path to merged file
-        mergeFile = FileManager.MakeOutName(tag, label, "", "rec", "", "merge")
+        mergeFile = FileManager.MakeOutName(tag, label, "", stage, "", "merge")
         mergePath = outDir + "/" + mergeFile
 
         # make path to files to merge
-        toMergeFiles = FileManager.MakeOutName(tag, label, '*', "rec")
+        toMergeFiles = FileManager.MakeOutName(tag, label, '*', stage)
         toMergePaths = outDir + "/" + toMergeFiles
 
         # construct command
@@ -60,7 +61,7 @@ class AnaGenerator:
         # return command and path to merged file
         return command, mergePath
 
-    def MakeCommand(self, tag, label, analysis, infile):
+    def MakeCommand(self, tag, label, analysis, simfile, recfile):
         """MakeCommand
 
         Generates command to run a specified analysis
@@ -70,7 +71,8 @@ class AnaGenerator:
           tag:      the tag associated with the current trial
           label:    the label associated with the input
           analysis: the tag associated with the analysis being run
-          infile:   the path to the input file to process 
+          simfile:  the path to the sim-level input
+          recfile:  the path to the rec-level input
         Returns:
           tuple of the command to be run and the output file
         """
@@ -92,8 +94,9 @@ class AnaGenerator:
         # construct and return command
         command = self.cfgAna["objectives"][analysis]["rule"]
         command = command.replace("<EXEC>", exePath)
-        command = command.replace("<INPUT>", infile)
         command = command.replace("<OUTPUT>", outPath)
+        command = command.replace("<SIM>", simfile)
+        command = command.replace("<RECO>", recfile)
         return command, outPath
 
     def MakeScript(self, tag, label, analysis, command):
