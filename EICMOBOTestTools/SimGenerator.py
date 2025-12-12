@@ -28,6 +28,16 @@ class SimGenerator:
         """
         self.cfgRun = ConfigParser.ReadJsonFile(run)
 
+    def MakeOverlapCheckCommand(self):
+        """MakeOverlapCheckCommand
+
+        Generates command to run overlap check
+
+        Returns:
+          command to be run
+        """
+        return self.cfgRun["overlap_check"] + " -c $DETECTOR_PATH/$DETECTOR_CONFIG.xml"
+
     def MakeCommand(self, tag, label, path, steer, inType): 
         """MakeCommand
 
@@ -107,11 +117,17 @@ class SimGenerator:
             config
         )
 
+        # make command to check overlap
+        #   -- TODO should stop trial somehow if
+        #      there are overlaps
+        #checkOverlap = self.MakeOverlapCheckCommand()
+
         # compose script
         with open(simPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
             script.write(setInstall + "\n")
             script.write(setConfig + "\n\n")
+            #script.write(checkOverlap + "\n\n")  # TODO add when ready
             script.write(command)
 
         # make sure script can be run

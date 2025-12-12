@@ -128,7 +128,12 @@ class TrialManager:
         )
         commands = [setInstall, setConfig]
 
-        # TODO add overlap check here
+        # check for overlaps
+        #   -- TODO should stop trial somehow if
+        #      there are overlaps
+        #commands.append(
+        #    self.simGen.MakeOverlapCheckCommand()
+        #)
 
         # step 2: generate relevant simulation,
         # reconstruction commands
@@ -140,6 +145,12 @@ class TrialManager:
             inLoc  = inCfg["location"]
             inType = inCfg["type"]
             for inSteer in os.listdir(inLoc):
+
+                # only consider steering files
+                # (which end in .py)
+                isSteer = inSteer.endswith('.py')
+                if not isSteer:
+                    continue
 
                 # generate command to run simulation
                 commands.append(
