@@ -11,10 +11,11 @@
 #   ./generate-input.sh
 # ===============================================
 
-# single electron -------------------------------
+out_sim=$1
+out_rec=$2
 
-npsim --compactFile $DETECTOR_PATH/epic_ip6_extended.xml --enableG4GPS --steeringFile ./steering/electron/backward.e10ele.py --outputFile backward.e10ele.edm4hep.root
+npsim --compactFile $DETECTOR_PATH/epic_ip6_extended.xml --enableG4GPS --steeringFile ../steering/electron/backward.e10ele.py --outputFile $out_sim
 
-eicrecon -Ppodio:output_file=backward.e10ele.edm4eic.root backward.e10ele.edm4hep.root
+eicrecon -Ppodio:output_file=$out_rec $out_sim
 
 # end ===========================================
