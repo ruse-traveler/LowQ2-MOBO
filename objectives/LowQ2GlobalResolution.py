@@ -95,6 +95,20 @@ def CalculateMomReso(
         out.WriteObject(fres, "fMomRes")
         out.Close()
 
+    # grab objective and other info
+    reso = fres.GetParameter(2)
+    eres = fres.GetParError(2)
+    mean = fres.GetParameter(1)
+    emea = fres.GetParError(1)
+
+    # write them out to a text file for extraction later
+    otext = ofile.replace(".root", ".txt")
+    with open(otext, 'w') as out:
+        out.write(f"{reso}\n")
+        out.write(f"{eres}\n")
+        out.write(f"{mean}\n")
+        out.write(f"{emea}")
+
     # and return calculated resolution
     return fres.GetParameter(2)
 

@@ -120,8 +120,29 @@ def CalculateMomReso(
         out.WriteObject(fres, "fMomRes")
         out.Close()
 
+    # grab objective and other info
+    #   - FIXME the local track momenta is *very* different from
+    #     the electron momentum, so just use abs value of mean
+    #     and RMS of %-diff for now
+    #reso = fres.GetParameter(2)
+    #eres = fres.GetParError(2)
+    #mean = fres.GetParameter(1)
+    #emea = fres.GetParError(1)
+    reso = hres.GetRMS()
+    eres = hres.GetRMSError()
+    mean = np.abs(hres.GetMean())
+    emea = np.abs(hres.GetMeanError())
+
+    # write them out to a text file for extraction later
+    otext = ofile.replace(".root", ".txt")
+    with open(otext, 'w') as out:
+        out.write(f"{reso}\n")
+        out.write(f"{eres}\n")
+        out.write(f"{mean}\n")
+        out.write(f"{emea}")
+
     # and return calculated resolution
-    return fres.GetParameter(2)
+    return reso
 
 # main ========================================================================
 
