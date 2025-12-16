@@ -125,16 +125,26 @@ class RecGenerator:
         recPath   = runDir + "/" + recScript
 
         # make commands to set detector config
-        setInstall, setConfig = FileManager.MakeSetCommands(
+        setDetInstall, setDetConfig = FileManager.MakeDetSetCommands(
             self.cfgRun["epic_setup"],
             config
         )
 
+        # if an eicrecon installation is specified,
+        # make command to set that
+        setRecInstall = None
+        if "eicrecon_setup" in self.cfgRun:
+            setRecInstall = FileManager.MakeRecSetCommands(
+                self.cfgRun["eicrecon_setup"]
+            )
+
         # compose script
         with open(recPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
-            script.write(setInstall + "\n")
-            script.write(setConfig + "\n\n")
+            script.write(setDetInstall + "\n")
+            script.write(setDetConfig + "\n\n")
+            if setRecInstall:
+                script.write(setRecInstall + "\n\n")
             script.write(command)
 
         # make sure script can be run

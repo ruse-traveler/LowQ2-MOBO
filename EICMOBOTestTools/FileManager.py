@@ -147,14 +147,14 @@ def MakeScriptName(tag, label = "", steer = "", stage = "", analysis = ""):
     body = GetBody(label, steer, stage)
     return "do_aid2e_" + tag + body + ".sh"
 
-def MakeSetCommands(setup, config):
-    """MakeSetCommands
+def MakeDetSetCommands(setup, config):
+    """MakeDetSetCommands
 
     Creates commands to set relevant
-    detector path and configuration"
+    detector path and configuration.
 
     Args:
-      setup:  path to geometry installation
+      setup:  path to geometry installation script
       config: name of new detector config
     Returns:
       tuple of commands to set new detector path and config
@@ -162,5 +162,18 @@ def MakeSetCommands(setup, config):
     setInsall = "source " + setup
     setConfig = "export DETECTOR_CONFIG=" + config
     return setInsall, setConfig
+
+def MakeRecSetCommands(setup):
+    """MakeRecSetCommands
+
+    Creates commands to set relevant
+    EICrecon path.
+
+    Args:
+      setup: path to eicrecon installation script
+    Returns:
+      command to be run
+    """
+    return "source " + setup
 
 # end =========================================================================
