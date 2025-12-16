@@ -112,7 +112,7 @@ class SimGenerator:
         simPath   = runDir + "/" + simScript
 
         # make commands to set detector config
-        setInstall, setConfig = FileManager.MakeSetCommands(
+        setDetInstall, setDetConfig = FileManager.MakeDetSetCommands(
             self.cfgRun["epic_setup"],
             config
         )
@@ -125,8 +125,8 @@ class SimGenerator:
         # compose script
         with open(simPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
-            script.write(setInstall + "\n")
-            script.write(setConfig + "\n\n")
+            script.write(setDetInstall + "\n")
+            script.write(setDetConfig + "\n\n")
             #script.write(checkOverlap + "\n\n")  # TODO add when ready
             script.write(command)
 

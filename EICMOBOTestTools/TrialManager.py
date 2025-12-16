@@ -122,11 +122,11 @@ class TrialManager:
 
         # create commands to set detector path, config
         cfgFile = FileManager.GetConfigFromPath(trialCfg)
-        setInstall, setConfig = FileManager.MakeSetCommands(
+        setDetInstall, setDetConfig = FileManager.MakeDetSetCommands(
             self.cfgRun["epic_setup"],
             cfgFile
         )
-        commands = [setInstall, setConfig]
+        commands = [setDetInstall, setDetConfig]
 
         # check for overlaps
         #   -- TODO should stop trial somehow if
@@ -134,6 +134,14 @@ class TrialManager:
         #commands.append(
         #    self.simGen.MakeOverlapCheckCommand()
         #)
+
+        # if an eicrecon installation is specified,
+        # make command to set that
+        if "eicrecon_setup" in self.cfgRun:
+            setRecInstall = FileManager.MakeRecSetCommands(
+                self.cfgRun["eicrecon_setup"]
+            )
+            commands.append(setRecInstall)
 
         # step 2: generate relevant simulation,
         # reconstruction commands
