@@ -9,6 +9,7 @@
 
 import os
 import stat
+import sys
 
 from EICMOBOTestTools import ConfigParser
 from EICMOBOTestTools import FileManager
@@ -29,6 +30,30 @@ class AnaGenerator:
         """
         self.cfgRun = ConfigParser.ReadJsonFile(run)
         self.cfgAna = ConfigParser.ReadJsonFile(ana)
+
+    def GetDummyValue(self, objective):
+        """GetDummyObjective
+
+        Returns a dummy value for the specified
+        objective. This is used when trials fail
+        due to non-infrastructural reasons (e.g.
+        a parameterization generates overlaps)
+
+        Args:
+          objective: the objective to get a dummy value for
+        Returns:
+          a dummy value that's above or below the objective's
+          threshold
+        """
+
+        # if minimizing, put dummy value *above* threshold
+        # and if maximizing, put dummy value *below* threshold,
+        scale = 2.0
+        if self.cfgAna["objectives"][objective]["goal"] == "maximize":
+            scale = 0.5
+
+        # now return scaled threshold
+        return scale * self.cfgAna["objectives"][objective]["threshold"]
 
     def MakeMergeCommand(self, tag, label, stage = "rec"):
         """MakeMergeCommand
@@ -106,11 +131,10 @@ class AnaGenerator:
         for a given tag.
 
         Args:
-          tag:     the tag associated with the current trial
-          label:   the label associated with the input
-          steer:   the input steering file
-          config:  the detector config file to use
-          command: the command to be run
+          tag:      the tag associated with the current trial
+          label:    the label associated with the input
+          analysis: the tag associated with the analysis being run
+          command:  the command to be run
         Returns:
           path to the script created
         """

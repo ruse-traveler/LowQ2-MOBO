@@ -223,6 +223,7 @@ class TrialManager:
         # compose script
         with open(runPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
+            script.write("set -e\n\n")
             for command in commands:
                 script.write(command + "\n\n")
 
@@ -252,18 +253,23 @@ class TrialManager:
 
         # create and run script
         script, outFiles = self.MakeTrialScript(param)
-        subprocess.run([self.cfgRun["eic_shell"], "--", script])
+        process = subprocess.run([self.cfgRun["eic_shell"], "--", script])
 
-        # write out values of parameters to
-        # output file(s) for analysis later
+        # write out values of parameters for later
+        # analysis
+        #   --> if parameters generated overlap
+        #       (return code 9), punish with
+        #       objectives above or below
+        #       threshold
         for anaKey, anaOut in outFiles.items():
             anaPath = pathlib.Path(anaOut)
             anaTxt  = anaPath.with_suffix('.txt')
-            isFile  = os.path.isfile(anaTxt)
             with open(anaTxt, 'a+') as txt:
+                if process.returncode == 9:
+                    dum = self.anaGen.GetDummyValue(anaKey)
+                    txt.write(f"{dum}")
                 for parKey, parVal in param.items():
-                    if isFile:
-                        txt.write("\n")
+                    txt.write("\n")
                     txt.write(f"{parVal}")
 
         # return relevant output files

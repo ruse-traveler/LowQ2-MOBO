@@ -52,7 +52,7 @@ class SimGenerator:
 
         # command(s) to exit if there were any overlaps
         checks = [
-            f'grep -F "Number of illegal overlaps/extrusions : " {log} | while IFS= read -r line; do',
+          f'grep -F "Number of illegal overlaps/extrusions : " {log} | while IFS= read -r line; do',
           '  lastChar="${line: -1}"',
           '  if [[ $lastChar =~ ^[0-9]$ ]]; then',
           '    if (( lastChar > 0 )); then',
@@ -154,6 +154,7 @@ class SimGenerator:
         # compose script
         with open(simPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
+            script.write("set -e\n\n")
             script.write(setDetInstall + "\n")
             script.write(setDetConfig + "\n\n")
             script.write(checkOverlap + "\n\n")
