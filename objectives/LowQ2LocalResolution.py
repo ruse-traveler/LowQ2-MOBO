@@ -53,7 +53,7 @@ def CalculateMomReso(
     axis = ";(p_{tag" + f"{tag}" + "} - p^{e}_{mag}) / p^{e}_{mag}"
 
     # create histogram from extracting resolution
-    hres = ROOT.TH1D("hMomRes", axis, 50, -2., 3.)
+    hres = ROOT.TH1D("hMomRes", axis, 100, 0, 1e-6)
     hres.Sumw2()
 
     # event loop --------------------------------------------------------------
@@ -88,9 +88,14 @@ def CalculateMomReso(
                 raise ValueError("Unkown tagger specified!")
 
         # calculate momentum of e- leaving beamline magnets
+        if len(maghits) != 5:
+            continue
         emag  = maghits[4]
         pmag2 = emag.getMomentum().x**2 + emag.getMomentum().y**2 + emag.getMomentum().z**2
         pmag  = np.sqrt(pmag2)
+        
+        # compute unit vector for beamline momentum
+        umag = np.array([emag.getMomentum().x, emag.getMomentum().y, emag.getMomentum().z]) / pmag
 
         # now compare against tagger hits
         for trk in tagtrks:
@@ -98,15 +103,19 @@ def CalculateMomReso(
             # calculate momentum of tagger track
             ptag2 = trk.getMomentum().x**2 + trk.getMomentum().y**2 + trk.getMomentum().z**2
             ptag  = np.sqrt(ptag2)
+            
+            # compute unit vector for tagger momentum
+            utag = np.array([trk.getMomentum().x, trk.getMomentum().y, trk.getMomentum().z]) / ptag
 
-            # and now compute resolution
-            pres = (ptag - pmag) / pmag
+            # compute resolution as 1 - dot product of unit vectors
+            dot_product = np.dot(umag, utag)
+            pres = 1.0 - dot_product
             hres.Fill(pres)
 
     # resolution calculation --------------------------------------------------
 
     # fit spectrum with a gaussian to extract peak 
-    fres = ROOT.TF1("fMomRes", "gaus(0)", -0.5, 0.5)
+    fres = ROOT.TF1("fMomRes", "gaus(0)", 0, 1e-6)
     fres.SetParameter(0, hres.Integral())
     fres.SetParameter(1, hres.GetMean())
     fres.SetParameter(2, hres.GetRMS())
