@@ -48,11 +48,11 @@ class AnaGenerator:
         outDir = self.cfgRun["out_path"] + "/" + tag
 
         # make path to merged file
-        mergeFile = FileManager.MakeOutName(tag, label, "", stage, "", "merge")
+        mergeFile = FileManager.MakeOutName(stage, tag, label, "", "", "merge")
         mergePath = outDir + "/" + mergeFile
 
         # make path to files to merge
-        toMergeFiles = FileManager.MakeOutName(tag, label, '*', stage)
+        toMergeFiles = FileManager.MakeOutName(stage, tag, label, '*')
         toMergePaths = outDir + "/" + toMergeFiles
 
         # construct command
@@ -83,7 +83,7 @@ class AnaGenerator:
         FileManager.MakeDir(outDir)
 
         # construct output name
-        outFile = FileManager.MakeOutName(tag, label, "", "ana", analysis)
+        outFile = FileManager.MakeOutName("ana", tag, label, "", analysis)
         outPath = outDir + "/" + outFile
 
         # construct executable path

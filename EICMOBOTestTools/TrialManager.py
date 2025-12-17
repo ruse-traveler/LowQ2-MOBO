@@ -129,11 +129,9 @@ class TrialManager:
         commands = [setDetInstall, setDetConfig]
 
         # check for overlaps
-        #   -- TODO should stop trial somehow if
-        #      there are overlaps
-        #commands.append(
-        #    self.simGen.MakeOverlapCheckCommand()
-        #)
+        commands.append(
+            self.simGen.MakeOverlapCheckCommand(self.tag)
+        )
 
         # if an eicrecon installation is specified,
         # make command to set that
