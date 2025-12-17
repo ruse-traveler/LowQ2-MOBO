@@ -63,8 +63,8 @@ class RecGenerator:
 
         # construct input/output names
         steeTag = FileManager.ConvertSteeringToTag(steer)
-        inFile  = FileManager.MakeOutName(tag, label, steeTag, "sim")
-        outFile = FileManager.MakeOutName(tag, label, steeTag, "rec")
+        inFile  = FileManager.MakeOutName("sim", tag, label, steeTag)
+        outFile = FileManager.MakeOutName("rec", tag, label, steeTag)
 
         # make sure output directory
         # exists for trial

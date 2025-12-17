@@ -28,15 +28,46 @@ class SimGenerator:
         """
         self.cfgRun = ConfigParser.ReadJsonFile(run)
 
-    def MakeOverlapCheckCommand(self):
+    def MakeOverlapCheckCommand(self, tag):
         """MakeOverlapCheckCommand
 
         Generates command to run overlap check
+        and exit subprocess if an overlap is
+        found.
 
+        Args:
+          tag: tag associated with current trial
         Returns:
           command to be run
         """
-        return self.cfgRun["overlap_check"] + " -c $DETECTOR_PATH/$DETECTOR_CONFIG.xml"
+
+        # make sure output directory
+        # exists for trial
+        outDir = self.cfgRun["out_path"] + "/" + tag
+        FileManager.MakeDir(outDir)
+
+        # command to do overlap check
+        log = outDir + "/" + FileManager.MakeOutName("geo", tag)
+        run = self.cfgRun["overlap_check"] + " -c $DETECTOR_PATH/$DETECTOR_CONFIG.xml > " + log + " 2>&1"
+
+        # command(s) to exit if there were any overlaps
+        checks = [
+          f'grep -F "Number of illegal overlaps/extrusions : " {log} | while IFS= read -r line; do',
+          '  lastChar="${line: -1}"',
+          '  if [[ $lastChar =~ ^[0-9]$ ]]; then',
+          '    if (( lastChar > 0 )); then',
+          '      exit 9',
+          '    fi',
+          '  fi',
+          'done'
+        ]
+        #check = "\n".join(line for line in checks) + "\n"
+        check = ""
+        for line in checks:
+            check += line + "\n"
+
+        # return full command
+        return run + "\n" + check
 
     def MakeCommand(self, tag, label, path, steer, inType): 
         """MakeCommand
@@ -57,7 +88,7 @@ class SimGenerator:
 
         # construct output name
         steeTag = FileManager.ConvertSteeringToTag(steer)
-        outFile = FileManager.MakeOutName(tag, label, steeTag, "sim")
+        outFile = FileManager.MakeOutName("sim", tag, label, steeTag)
 
         # make sure output directory
         # exists for trial
@@ -118,16 +149,15 @@ class SimGenerator:
         )
 
         # make command to check overlap
-        #   -- TODO should stop trial somehow if
-        #      there are overlaps
-        #checkOverlap = self.MakeOverlapCheckCommand()
+        checkOverlap = self.MakeOverlapCheckCommand(tag)
 
         # compose script
         with open(simPath, 'w') as script:
             script.write("#!/bin/bash\n\n")
+            script.write("set -e\n\n")
             script.write(setDetInstall + "\n")
             script.write(setDetConfig + "\n\n")
-            #script.write(checkOverlap + "\n\n")  # TODO add when ready
+            script.write(checkOverlap + "\n\n")
             script.write(command)
 
         # make sure script can be run
