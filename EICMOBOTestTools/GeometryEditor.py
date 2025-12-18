@@ -9,14 +9,12 @@
 # =============================================================================
 
 import os
+import pathlib
 import re
 import shutil
 import sys
 import xml.etree.ElementTree as ET
 
-# TEST
-import fileinput
-import pathlib
 
 from EICMOBOTestTools import ConfigParser
 
