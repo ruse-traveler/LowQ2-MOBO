@@ -109,7 +109,7 @@ class GeometryEditor:
         to it. If it doesn't exist, it creates it.
 
         Args:
-          file: the xml file to get/create
+          file: the xml file to get/created
           tag:  the tag associated with the current trial
         Returns:
           path to the xml file with tag
@@ -269,10 +269,10 @@ class GeometryEditor:
                         #   new version with filenames
                         #   updated accordingly
                         copy     = self.__GetFile(full, tag)
-                        update   = self.__GetNewXMLName(query, tag)
+                        update   = self.__GetNewXMLName(check, tag)
                         editable = pathlib.Path(copy)
                         text     = editable.read_text(encoding="utf-8")
-                        edited   = text.replace(query, update)
+                        edited   = text.replace(check, update)
                         editable.write_text(edited, encoding="utf-8")
 
                         if file not in new:
