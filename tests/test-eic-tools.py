@@ -22,13 +22,27 @@ import EICMOBOTestTools as emt
 # these should work
 tag1H = emt.GetParameter("tagger1_height", "../configuration/parameters.config")
 tag2W = emt.GetParameter("tagger2_width", "../configuration/parameters.config")
+tag1Z = {
+    "element"    : "value",
+    "path"       : ".//constant[@name='Tagger1_Layer_1_Z']",
+    "default"    : "3.0",
+    "units"      : "mm",
+    "lower"      : "1.0",
+    "upper"      : "102.0",
+    "compact"    : "compact/far_backward/taggers.xml",
+    "stage"      : "sim",
+    "value_type" : "float",
+    "param_type" : "range"
+}
 
 # grab variables
 path1H, type1H, units1H = emt.GetPathElementAndUnits(tag1H)
 path2W, type2W, units2W = emt.GetPathElementAndUnits(tag2W)
+path1Z, type1Z, units1Z = emt.GetPathElementAndUnits(tag1Z)
 
 print(f"[0][tagger1_height] path = {path1H}, type = {type1H}, units = {units1H}")
 print(f"[0][tagger2_width] path = {path2W}, type = {type2W}, units = {units2W}")
+print(f"[0][tagger1_layer1_z] path = {tag1Z}, type = {type1Z}, units = {units1Z}")
 
 try:
     tag2H = emt.GetParameter("tgager2_hieght", "parameters.config")
@@ -43,28 +57,58 @@ finally:
 geditor = emt.GeometryEditor("../configuration/run.config")
 
 # edit a couple parameters in one compact file
+geditor.EditCompact(tag1Z, 5.0, "test1A")
 geditor.EditCompact(tag1H, 147.5, "test1A")
 geditor.EditCompact(tag2W, 156.3, "test1A")
-print(f"[1][test A] set values of tagger 1 height, tagger 2 width to 147.5, 156.3 respectively")
+print(f"[1][test A] set values of tagger 1 layer 1 z, tagger 1 height, tagger 2 width to 5.0 mm, 147.5 mm, 156.3 mm respectively")
 
-# now create config files associated with
-# compact; the 2nd line should leave
+# now create a config files associated with
+# compact; the 2nd line should leave the
 # config file unmodified
 configA = geditor.EditConfig(tag1H, "test1A")
 configA = geditor.EditConfig(tag2W, "test1A")
 print(f"[1][Test A] config file {configA} created")
 
-# create a 2nd compact file with multiple
-# subsystems modified
+# grab/make additional parameters for
+# next test
 tag2H = emt.GetParameter("tagger2_height", "../configuration/parameters.config")
-geditor.EditCompact(tag2H, 159.8, "test1B")
-print(f"[1][test B] set value of tagger 2 height to 159.8")
+tag2Z = {
+    "element"    : "value",
+    "path"       : ".//constant[@name='Tagger2_Layer_2_Z']",
+    "default"    : "103.0",
+    "units"      : "mm",
+    "lower"      : "53",
+    "upper"      : "153.0",
+    "compact"    : "compact/far_backward/taggers.xml",
+    "stage"      : "sim",
+    "value_type" : "float",
+    "param_type" : "range"
+}
+bicLG = {
+    "element"    : "value",
+    "path"       : ".//constant[@name='EcalBarrel_LightGuide_length']",
+    "default"    : "5.0",
+    "units"      : "cm",
+    "lower"      : "1.0",
+    "upper"      : "9.0",
+    "compact"    : "compact/ecal/bic/bic.xml",
+    "stage"      : "sim",
+    "value_type" : "float",
+    "param_type" : "range"
+}
 
-# this one should create a new config file,
-# and the 2nd line should add the modified
-# dRICH file
-configB = geditor.EditConfig(tag2H, "test1B")
-print(f"[1][test B] config file {configB} created")
+# apply edits to compact files
+geditor.EditCompact(tag2H, 152.9, "test1B")
+geditor.EditCompact(tag2Z, 112.3, "test1B")
+geditor.EditCompact(bicLG, 7.0, "test1B")
+print(f"[1][Test B] set tagger 2 height to 152.9 mm, tagger 2 layer 2 z to 112.3 mm, and BIC light guide length to 7.0 cm")
+
+# and then recursively edit all
+# related files
+geditor.EditRelatedFiles(tag2H, "test1B")
+geditor.EditRelatedFiles(tag2Z, "test1B")
+geditor.EditRelatedFiles(bicLG, "test1B")
+print(f"[1][test B] recursively edited all files associated with tagger 2 height and BIC light guide")
 
 # (2) Test generators  --------------------------------------------------------
 
@@ -87,12 +131,9 @@ print(f"  {dosimB}")
 conPathA, conFileA = emt.SplitPathAndFile(configA)
 conFileA = conFileA.replace(".xml", "")
 
-conPathB, conFileB = emt.SplitPathAndFile(configB)
-conFileB = conFileB.replace(".xml", "")
-
 # now try to create a simulation driver script
 runsimA = simgen.MakeScript("test2A", intest, "backward.e10ele.py", conFileA, dosimA)
-runsimB = simgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileB, dosimB)
+runsimB = simgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileA, dosimB)
 print(f"[2][Test B] created driver scripts for simulation:")
 print(f"  {runsimA}")
 print(f"  {runsimB}")
@@ -109,7 +150,7 @@ print(f"  {dorecB}")
 
 # and now try to create a reconstruction driver script
 runrecA = recgen.MakeScript("test2A", intest, "backward.e10ele.py", conFileA, dorecA)
-runrecB = recgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileB, dorecB)
+runrecB = recgen.MakeScript("test2B", intest, "backward.e10ele.py", conFileA, dorecB)
 print(f"[2][Test D] Created driver scripts for reconstruction:")
 print(f"  {runrecA}")
 print(f"  {runrecB}")

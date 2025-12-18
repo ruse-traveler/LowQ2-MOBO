@@ -78,7 +78,7 @@ class TrialManager:
             if cfg["stage"] != "sim":
                 continue
             else:
-                self.geoEdit.EditCompact(cfg, value, self.tag)
+                self.geoEdit.EditRelatedFiles(cfg, value, self.tag)
                 trialConfig = self.geoEdit.EditConfig(cfg, self.tag)
 
         # return name of new config file
