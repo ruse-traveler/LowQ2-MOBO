@@ -262,25 +262,27 @@ class GeometryEditor:
                 # step 3(a)(i): check if any files include
                 #   any of the files related to the compact
                 for query in queries:
-                    check = path + query
-                    if self.__IsPatternInFile(check, full):
+                    if self.__IsPatternInFile(query, full):
 
                         # step3(a)(ii): if it does, create
                         #   new version with filenames
                         #   updated accordingly
                         copy     = self.__GetFile(full, tag)
-                        update   = self.__GetNewXMLName(check, tag)
+                        update   = self.__GetNewXMLName(query, tag)
                         editable = pathlib.Path(copy)
                         text     = editable.read_text(encoding="utf-8")
-                        edited   = text.replace(check, update)
+                        edited   = text.replace(query, update)
                         editable.write_text(edited, encoding="utf-8")
 
                         if file not in new:
                             new.append(file)
 
             # step 3(b): add any new related files to list
-            #   of files to look for
+            #   and update relative paths
             path = split[-step] + "/" + path
+            add  = path.split("/")[0]
+
             queries.extend(new)
+            queries[:] = [f"{add}/{query}" for query in queries]
 
 # end =========================================================================

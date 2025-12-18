@@ -20,18 +20,29 @@ import EICMOBOTestTools as emt
 # (0) Test ConfigParser -------------------------------------------------------
 
 # these should work
-tag1Z = emt.GetParameter("tagger1_layer1_z", "../configuration/parameters.config")
 tag1H = emt.GetParameter("tagger1_height", "../configuration/parameters.config")
 tag2W = emt.GetParameter("tagger2_width", "../configuration/parameters.config")
+tag1Z = {
+    "element"    : "value",
+    "path"       : ".//constant[@name='Tagger1_Layer_1_Z']",
+    "default"    : "3.0",
+    "units"      : "mm",
+    "lower"      : "1.0",
+    "upper"      : "102.0",
+    "compact"    : "compact/far_backward/taggers.xml",
+    "stage"      : "sim",
+    "value_type" : "float",
+    "param_type" : "range"
+}
 
 # grab variables
-path1Z, type1Z, units1Z = emt.GetPathElementAndUnits(tag1Z)
 path1H, type1H, units1H = emt.GetPathElementAndUnits(tag1H)
 path2W, type2W, units2W = emt.GetPathElementAndUnits(tag2W)
+path1Z, type1Z, units1Z = emt.GetPathElementAndUnits(tag1Z)
 
-print(f"[0][tagger1_layer1_z] path = {tag1Z}, type = {type1Z}, units = {units1Z}")
 print(f"[0][tagger1_height] path = {path1H}, type = {type1H}, units = {units1H}")
 print(f"[0][tagger2_width] path = {path2W}, type = {type2W}, units = {units2W}")
+print(f"[0][tagger1_layer1_z] path = {tag1Z}, type = {type1Z}, units = {units1Z}")
 
 try:
     tag2H = emt.GetParameter("tgager2_hieght", "parameters.config")
@@ -58,9 +69,21 @@ configA = geditor.EditConfig(tag1H, "test1A")
 configA = geditor.EditConfig(tag2W, "test1A")
 print(f"[1][Test A] config file {configA} created")
 
-# grab/make additional parameter for
+# grab/make additional parameters for
 # next test
 tag2H = emt.GetParameter("tagger2_height", "../configuration/parameters.config")
+tag2Z = {
+    "element"    : "value",
+    "path"       : ".//constant[@name='Tagger2_Layer_2_Z']",
+    "default"    : "103.0",
+    "units"      : "mm",
+    "lower"      : "53",
+    "upper"      : "153.0",
+    "compact"    : "compact/far_backward/taggers.xml",
+    "stage"      : "sim",
+    "value_type" : "float",
+    "param_type" : "range"
+}
 bicLG = {
     "element"    : "value",
     "path"       : ".//constant[@name='EcalBarrel_LightGuide_length']",
@@ -76,12 +99,14 @@ bicLG = {
 
 # apply edits to compact files
 geditor.EditCompact(tag2H, 152.9, "test1B")
+geditor.EditCompact(tag2Z, 112.3, "test1B")
 geditor.EditCompact(bicLG, 7.0, "test1B")
-print(f"[1][Test B] set tagger 2 height to 152.9 mm, and the BIC light guide length to 7.0 cm")
+print(f"[1][Test B] set tagger 2 height to 152.9 mm, tagger 2 layer 2 z to 112.3 mm, and BIC light guide length to 7.0 cm")
 
 # and then recursively edit all
 # related files
 geditor.EditRelatedFiles(tag2H, "test1B")
+geditor.EditRelatedFiles(tag2Z, "test1B")
 geditor.EditRelatedFiles(bicLG, "test1B")
 print(f"[1][test B] recursively edited all files associated with tagger 2 height and BIC light guide")
 
