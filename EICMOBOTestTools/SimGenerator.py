@@ -102,8 +102,12 @@ class SimGenerator:
         steerer = " --steeringFile " + path + "/" + steer
         output  = " --outputFile " + outDir + "/" + outFile
 
+        otherArgs= ""
+        for arg in self.cfgRun["sim_args"]:
+            otherArgs = otherArgs + " " + arg
+
         # construct most of command
-        command = self.cfgRun["sim_exec"] + compact + steerer
+        command = self.cfgRun["sim_exec"] + compact + steerer + otherArgs
         if inType == "gun":
             command = command + " -G "
         elif inType == "gps":

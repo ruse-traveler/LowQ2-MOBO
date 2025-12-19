@@ -81,12 +81,16 @@ class RecGenerator:
                 collects = collects + collect
             icollect = icollect + 1
 
+        otherArgs= ""
+        for arg in self.cfgRun["rec_args"]:
+            otherArgs = otherArgs + " " + arg
+
         # construct output arguments
         outArg  = "-Ppodio:output_file=" + outDir + "/" + outFile
         collArg = "-Ppodio:output_collections=" + collects
 
         # construct most of command
-        command = self.cfgRun["rec_exec"] + " " + outArg + " " + collArg
+        command = self.cfgRun["rec_exec"] + " " + outArg + " " + collArg + " " + otherArgs
         for param, unitsAndValue in self.argParams.items():
             units, value = unitsAndValue
             if units != '': 
