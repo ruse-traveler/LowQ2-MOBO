@@ -78,8 +78,8 @@ class TrialManager:
             if cfg["stage"] != "sim":
                 continue
             else:
-                self.geoEdit.EditRelatedFiles(cfg, value, self.tag)
-                trialConfig = self.geoEdit.EditConfig(cfg, self.tag)
+                self.geoEdit.EditCompact(cfg, value, self.tag)
+                self.geoEdit.EditRelatedFiles(cfg, self.tag)
 
         # return name of new config file
         return trialConfig
@@ -117,14 +117,13 @@ class TrialManager:
 
         # step 1: edit geometry files, set
         # reconstruction parameters
-        trialCfg = self.__DoGeometryEdits(params)
+        self.__DoGeometryEdits(params)
         self.__SetRecoArgs(params)
 
         # create commands to set detector path, config
-        cfgFile = FileManager.GetConfigFromPath(trialCfg)
         setDetInstall, setDetConfig = FileManager.MakeDetSetCommands(
             self.cfgRun["epic_setup"],
-            cfgFile
+            self.cfgRun["det_config"]
         )
         commands = [setDetInstall, setDetConfig]
 
