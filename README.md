@@ -79,11 +79,14 @@ Then, install the [AID2E scheduler](https://github.com/aid2e/scheduler_epic)
 following the instructions in its repository. Remember to configure the
 scheduler appropriately if you're going to run with SLURM, PanDA, etc.
 
-Finally, install the local utilities/objectives by running
+Install the local utilities/objectives by running
 the command below in this directory:
 ```bash
 pip install -e .
 ```
+
+Lastly, you'll need to make sure the `eic-shell` is available on your
+machine.  You can find instructions to do so [here](https://eic.github.io/tutorial-setting-up-environment/).
 
 ## Running the framework
 
@@ -170,7 +173,7 @@ picking up the correct objective scripts, eg.
             "input" : "single_electron",
             "path"  : "<where-the-mobo-goes>/LowQ2-MOBO/objectives",
             "exec"  : "LowQ2LocalResolution.py",
-            "rule"  : "python <EXEC> -i <INPUT> -o <OUTPUT> -t 1",
+            "rule"  : "python <EXEC> -i <RECO> -o <OUTPUT> -t 1",
             "stage" : "ana",
             "goal"  : "minimize"
         }
