@@ -1,4 +1,7 @@
-# LowQ2-MOBO [Under construction]
+# LowQ2-MOBO
+
+**NOTE:** This code is a public archive. Code is now maintained
+at [aid2e/LowQ2-MOBO](https://github.com/aid2e/LowQ2-MOBO).
 
 An application of the AID2E framework to the ePIC Low-Q2 tagger. 
 
